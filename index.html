@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NASA Explorer App</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: start;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    h2 {
+      text-align: center;
+      color: #66fcf1;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    input {
+      outline: none;
+    }
+
+    button {
+      background-color: #45a29e;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #66fcf1;
+      color: #0f2027;
+    }
+
+    p.error {
+      color: red;
+      text-align: center;
+      margin-top: -5px;
+    }
+
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: crimson;
+      width: auto;
+      padding: 10px 16px;
+    }
+
+    /* Home (NASA Explorer) */
+    #gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      transition: transform 0.3s;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #66fcf1;
+    }
+
+    .card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .card h3 {
+      color: #66fcf1;
+      font-size: 1.1rem;
+      margin: 10px 0;
+    }
+
+    .card p {
+      font-size: 0.9rem;
+      max-height: 80px;
+      overflow: auto;
+      color: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Sign-Up Section -->
+    <div id="signupSection">
+      <h2>Sign Up</h2>
+      <input type="text" id="signupUsername" placeholder="Username" required />
+      <input type="email" id="signupEmail" placeholder="Email" required />
+      <input type="password" id="signupPassword" placeholder="Password" required />
+      <input type="password" id="signupConfirm" placeholder="Confirm Password" required />
+      <button onclick="handleSignup()">Sign Up</button>
+      <p class="error" id="signupError"></p>
+    </div>
+
+    <!-- Login Section -->
+    <div id="loginSection" class="hidden">
+      <h2>Login</h2>
+      <input type="text" id="loginUsername" placeholder="Username" required />
+      <input type="password" id="loginPassword" placeholder="Password" required />
+      <button onclick="handleLogin()">Login</button>
+      <p class="error" id="loginError"></p>
+    </div>
+
+    <!-- Home Section (NASA Explorer) -->
+    <div id="homeSection" class="hidden">
+      <button class="logout-btn" onclick="handleLogout()">Logout</button>
+      <h2>🔎 NASA Keyword Image Explorer</h2>
+      <form id="searchForm" onsubmit="searchNASA(event)">
+        <input type="text" id="keywordInput" placeholder="Search NASA images..." required />
+        <button type="submit">Search</button>
+      </form>
+      <div id="gallery"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // Show Signup by default
+    const signupSection = document.getElementById("signupSection");
+    const loginSection = document.getElementById("loginSection");
+    const homeSection = document.getElementById("homeSection");
+
+    // Sign Up Function
+    function handleSignup() {
+      const username = document.getElementById("signupUsername").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value;
+      const confirm = document.getElementById("signupConfirm").value;
+      const error = document.getElementById("signupError");
+
+      if (!username || !email || !password || !confirm) {
+        error.textContent = "Please fill in all fields.";
+        return;
+      }
+
+      if (password !== confirm) {
+        error.textContent = "Passwords do not match.";
+        return;
+      }
+
+      const user = { username, email, password };
+      localStorage.setItem("nasaUser", JSON.stringify(user));
+      error.textContent = "";
+
+      // Go to login screen
+      signupSection.classList.add("hidden");
+      loginSection.classList.remove("hidden");
+    }
+
+    // Login Function
+    function handleLogin() {
+      const username = document.getElementById("loginUsername").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const error = document.getElementById("loginError");
+
+      const stored = JSON.parse(localStorage.getItem("nasaUser"));
+
+      if (!stored || stored.username !== username || stored.password !== password) {
+        error.textContent = "Invalid username or password.";
+        return;
+      }
+
+      error.textContent = "";
+
+      // Show Home
+      loginSection.classList.add("hidden");
+      homeSection.classList.remove("hidden");
+    }
+
+    // Logout
+    function handleLogout() {
+      // Keep user in localStorage, just logout UI-wise
+      homeSection.classList.add("hidden");
+      loginSection.classList.remove("hidden");
+    }
+
+    // NASA Image Search
+    async function searchNASA(e) {
+      e.preventDefault();
+      const query = document.getElementById("keywordInput").value.trim();
+      const gallery = document.getElementById("gallery");
+
+      if (!query) return;
+      gallery.innerHTML = "<p>Loading...</p>";
+
+      try {
+        const res = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=image`);
+        const data = await res.json();
+        const items = data.collection.items;
+
+        if (!items.length) {
+          gallery.innerHTML = "<p>No results found.</p>";
+          return;
+        }
+
+        gallery.innerHTML = "";
+        items.slice(0, 20).forEach(item => {
+          const dataItem = item.data?.[0];
+          const linkItem = item.links?.[0];
+          if (!dataItem || !linkItem) return;
+
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const img = document.createElement("img");
+          img.src = linkItem.href;
+          img.alt = dataItem.title;
+
+          const title = document.createElement("h3");
+          title.textContent = dataItem.title;
+
+          const desc = document.createElement("p");
+          desc.textContent = dataItem.description || "No description available.";
+
+          card.appendChild(img);
+          card.appendChild(title);
+          card.appendChild(desc);
+
+          gallery.appendChild(card);
+        });
+
+      } catch (err) {
+        gallery.innerHTML = "<p>Failed to load. Try again later.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
